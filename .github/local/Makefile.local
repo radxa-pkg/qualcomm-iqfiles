@@ -1,0 +1,5 @@
+.PHONY: test-maintainer-scripts
+test: test-maintainer-scripts
+
+test-maintainer-scripts:
+	tests/test-maintainer-scripts.sh

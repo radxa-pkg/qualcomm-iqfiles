@@ -1,0 +1,16 @@
+# Local Debian rules overrides for qualcomm-iqfiles.
+
+override_dh_installdeb:
+	set -e; \
+	generated=; \
+	for package in $$(dh_listpackages); do \
+		for script in postinst prerm postrm; do \
+			target=debian/$$package.$$script; \
+			if [ ! -e "$$target" ]; then \
+				cp debian/qualcomm-iqfiles.$$script "$$target"; \
+				generated="$$generated $$target"; \
+			fi; \
+		done; \
+	done; \
+	trap 'rm -f $$generated' 0 1 2 3 15; \
+	dh_installdeb
