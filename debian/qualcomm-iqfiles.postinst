@@ -1,0 +1,130 @@
+#!/bin/sh
+set -e
+
+package=$DPKG_MAINTSCRIPT_PACKAGE
+root=${DPKG_ROOT:-}
+payload_path=/usr/share/$package
+payload_dir=$root$payload_path
+state_dir=$root/var/lib/qualcomm-iqfiles
+state_file=$state_dir/$package.paths
+
+load_record() {
+	wanted=$1
+	record_runtime=
+	record_diverted=
+
+	while IFS='|' read -r record_name runtime diverted; do
+		if [ "$record_name" = "$wanted" ]; then
+			record_runtime=$runtime
+			record_diverted=$diverted
+			return 0
+		fi
+	done <"$state_file"
+
+	return 1
+}
+
+read_runtime_dir() {
+	runtime_dir_file=$payload_dir/runtime-dir
+
+	if [ ! -f "$runtime_dir_file" ]; then
+		echo "error: runtime directory metadata is missing" >&2
+		return 1
+	fi
+
+	runtime_dir=$(cat "$runtime_dir_file")
+	case "$runtime_dir" in
+	/usr/lib/*/camera) ;;
+	*)
+		echo "error: invalid runtime directory: $runtime_dir" >&2
+		return 1
+		;;
+	esac
+
+	if [ ! -d "$root$runtime_dir" ]; then
+		echo "error: runtime directory does not exist: $runtime_dir" >&2
+		return 1
+	fi
+}
+
+remove_record() {
+	name=$1
+	runtime=$2
+	diverted=$3
+
+	if [ -L "$root$runtime" ] && [ "$(readlink "$root$runtime")" = "$payload_path/$name" ]; then
+		rm -f "$root$runtime"
+	fi
+
+	if [ -n "$diverted" ]; then
+		owner=$(dpkg-divert --listpackage "$runtime" 2>/dev/null || true)
+		if [ "$owner" = "$package" ]; then
+			dpkg-divert --package "$package" \
+				--remove --rename --divert "$diverted" "$runtime"
+		fi
+	fi
+}
+
+remove_stale_records() {
+	updated_state=$state_file.new
+	: >"$updated_state"
+
+	while IFS='|' read -r name runtime diverted; do
+		[ -n "$runtime" ] || continue
+
+		if [ -f "$payload_dir/$name" ]; then
+			printf '%s|%s|%s\n' "$name" "$runtime" "$diverted" >>"$updated_state"
+		else
+			remove_record "$name" "$runtime" "$diverted"
+		fi
+	done <"$state_file"
+
+	mv "$updated_state" "$state_file"
+}
+
+case "$1" in
+configure)
+	read_runtime_dir
+	install -d -m 0755 "$state_dir"
+	touch "$state_file"
+	remove_stale_records
+
+	for payload in "$payload_dir"/*.bin; do
+		[ -f "$payload" ] || continue
+		name=${payload##*/}
+
+		if load_record "$name"; then
+			runtime=$record_runtime
+			diverted=$record_diverted
+		else
+			runtime=$runtime_dir/$name
+			diverted=
+			owner=$(dpkg-divert --listpackage "$runtime" 2>/dev/null || true)
+
+			if [ -n "$owner" ] && [ "$owner" != "$package" ]; then
+				echo "error: $runtime is diverted by $owner" >&2
+				exit 1
+			fi
+
+			if [ -d "$root$runtime" ]; then
+				echo "error: runtime path is a directory: $runtime" >&2
+				exit 1
+			fi
+
+			if [ -e "$root$runtime" ] || [ -L "$root$runtime" ]; then
+				diverted=${runtime}.${package}.distrib
+				dpkg-divert --package "$package" \
+					--add --rename --divert "$diverted" "$runtime"
+			fi
+
+			printf '%s|%s|%s\n' "$name" "$runtime" "$diverted" >>"$state_file"
+		fi
+
+		ln -sfn "$payload_path/$name" "$root$runtime"
+	done
+	;;
+esac
+
+#DEBHELPER#
+
+exit 0
