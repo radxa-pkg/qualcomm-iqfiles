@@ -1,6 +1,7 @@
 qualcomm-iqfiles (0.1.0-1) UNRELEASED; urgency=medium
 
-  * Add initial Debian packaging support
+  * Package the tuned QCS9075 IMX577 IQ file
+  * Divert the vendor IQ file while the tuned file is active
+  * Support tuned IQ files without vendor-provided runtime files
 
  -- "Radxa Computer Co., Ltd" <dev@radxa.com>  Thu, 01 Jan 1970 08:00:00 +0800
-

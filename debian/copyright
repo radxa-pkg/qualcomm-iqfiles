@@ -8,9 +8,13 @@ License: External Code
 Files: debian/patches/**/*.patch
 License: External Code Patch
 
-Files: *
-Copyright: © 2025 Radxa Computer Co., Ltd
+Files: debian/* README.md Makefile pkg.conf.template
+Copyright: © 2026 Radxa Computer Co., Ltd
 License: GPL-3+
+
+Files: qcs9075/*.bin
+Copyright: Not specified
+License: Qualcomm proprietary
 
 License: External Code
  Unless otherwise specified, they are subject to the relevant License within
@@ -37,3 +41,7 @@ License: GPL-3+
  On Debian systems, the complete text of the GNU General Public License
  can be found in /usr/share/common-licenses/GPL-3.
 
+License: Qualcomm proprietary
+ This binary is a proprietary Qualcomm camera IQ artifact. No source license
+ text is included in this repository; redistribution and use are limited to
+ the permissions granted by its supplier.
