@@ -12,7 +12,7 @@ Files: debian/* README.md Makefile pkg.conf.template
 Copyright: © 2026 Radxa Computer Co., Ltd
 License: GPL-3+
 
-Files: qcs9075/*.bin
+Files: qualcomm-iqfiles-qcs9075/*
 Copyright: Not specified
 License: Qualcomm proprietary
 
