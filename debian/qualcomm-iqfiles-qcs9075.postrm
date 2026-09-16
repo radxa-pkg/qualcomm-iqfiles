@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+case $1 in
+remove | purge)
+	# Not handled on abort-install/abort-upgrade: those run before prerm
+	# removed the symlink, so the diversion could not be renamed back.
+	conflicts="
+        /usr/lib/qcs9100/camera/com.qti.tuned.lemans_rpi_imx577.bin
+        "
+	for i in $conflicts; do
+		if [ "$(dpkg-divert --listpackage "$i")" = "qualcomm-iqfiles-qcs9075" ]; then
+			dpkg-divert --package qualcomm-iqfiles-qcs9075 --rename --remove "$i"
+		fi
+	done
+	;;
+esac
+
+#DEBHELPER#
+
+exit 0

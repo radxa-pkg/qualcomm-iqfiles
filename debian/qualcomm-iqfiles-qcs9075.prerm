@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+case $1 in
+remove)
+	conflicts="
+        /usr/lib/qcs9100/camera/com.qti.tuned.lemans_rpi_imx577.bin
+        "
+	for i in $conflicts; do
+		if [ -L "$i" ]; then
+			rm -f "$i"
+		fi
+	done
+	;;
+esac
+
+#DEBHELPER#
+
+exit 0

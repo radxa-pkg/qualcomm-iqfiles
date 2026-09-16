@@ -3,6 +3,7 @@
 /files
 /linux-*/
 /u-boot-*/
+/qualcomm-iqfiles-qcs9075*/
 /*.debhelper.log
 /*.*.debhelper
 /*.substvars

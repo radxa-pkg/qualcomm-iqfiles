@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+case $1 in
+configure)
+	conflicts="
+        /usr/lib/qcs9100/camera/com.qti.tuned.lemans_rpi_imx577.bin
+        "
+	for i in $conflicts; do
+		ln -sfn "/usr/share/qualcomm-iqfiles-qcs9075/$(basename "$i")" "$i"
+	done
+	;;
+esac
+
+#DEBHELPER#
+
+exit 0
