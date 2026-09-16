@@ -1,38 +1,16 @@
 #!/bin/sh
 set -e
 
-package=$DPKG_MAINTSCRIPT_PACKAGE
-root=${DPKG_ROOT:-}
-payload_path=/usr/share/$package
-state_dir=$root/var/lib/qualcomm-iqfiles
-state_file=$state_dir/$package.paths
-
-cleanup() {
-	[ -f "$state_file" ] || return 0
-
-	while IFS='|' read -r name runtime diverted; do
-		[ -n "$runtime" ] || continue
-
-		if [ -L "$root$runtime" ] && [ "$(readlink "$root$runtime")" = "$payload_path/$name" ]; then
-			rm -f "$root$runtime"
-		fi
-
-		if [ -n "$diverted" ]; then
-			owner=$(dpkg-divert --listpackage "$runtime" 2>/dev/null || true)
-			if [ "$owner" = "$package" ]; then
-				dpkg-divert --package "$package" \
-					--remove --rename --divert "$diverted" "$runtime"
-			fi
-		fi
-	done <"$state_file"
-
-	rm -f "$state_file"
-	rmdir "$state_dir" 2>/dev/null || true
-}
-
-case "$1" in
+case $1 in
 remove)
-	cleanup
+	conflicts="
+        /usr/lib/qcs9100/camera/com.qti.tuned.lemans_rpi_imx577.bin
+        "
+	for i in $conflicts; do
+		if [ -L "$i" ]; then
+			rm -f "$i"
+		fi
+	done
 	;;
 esac
 
